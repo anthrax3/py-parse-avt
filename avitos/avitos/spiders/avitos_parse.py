@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import time
 from ..items import AvitosItem
+
+
 
 
 class AvitosParseSpider(scrapy.Spider):
@@ -9,26 +12,47 @@ class AvitosParseSpider(scrapy.Spider):
     start_urls = ['https://www.avito.ru/kazan/tovary_dlya_kompyutera/komplektuyuschie/videokarty']
     http_prefix = "https://www.avito.ru"
 
+    def clear_list(self,lists):
+        result=[]
+        for l in lists:
+            result.append(l.strip())
+        return result
+
+    def clear_price(self,str):
+        result=str.strip("руб. ")        
+        return result
+
+
     def parse(self, response):
         yield scrapy.Request(url=self.start_urls[0], callback=self.parse_page)
-        pages = response.css('.clearfix a[class="pagination-page"]::attr(href)').extract()
-        """
+        pages = response.css('.clearfix a[class="pagination-page"]::attr(href)').extract()                
         for num_page in pages:
+            time.sleep(5)
             yield scrapy.Request(url=self.http_prefix+num_page, callback=self.parse_page) 
-        """
-
+        
+            
     def parse_page(self, response):
-        print("\nТекущая страница = ",response.url+"\n")
-        #response.css('.item-description-title-link::text').extract()
+        names = response.css('.item-description-title-link::text').extract()
         links = response.css('.item-description-title-link::attr(href)').extract()
-        for link in links:
-            yield scrapy.Request(url=self.http_prefix+link, callback=self.parse_tovar) 
-
-    def parse_tovar(self, response):
+        dirty_prices = response.css('.about::text')
+        prices = []
+        for price in dirty_prices:
+            p = price.extract() 
+            if p is not None:
+                prices.append(p) 
+            else:
+                prices.append("") 
+            
+            """
+            if len(p)>1:
+                prices.append('-1')  # цена не указана
+            else:
+            """
+            
         item = AvitosItem()
-        name = response.css('.title-info-title-text::text').extract_first()
-        item['name'] = name
-
-        yield item
-
+        for i in range(0,len(names)):
+            item['name'] = names[i].strip()
+            item['price'] = self.clear_price(prices[i].strip()).split() # "".join(self.clear_price(prices[i].strip()).split()) # сделать очистку от букв, знаков препинания, пробелы
+            item['link'] = self.http_prefix + links[i]
+            yield item
 

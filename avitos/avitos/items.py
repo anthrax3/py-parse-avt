@@ -12,7 +12,8 @@ class AvitosItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
     price = scrapy.Field()
-    describe = scrapy.Field()
-    name_seller = scrapy.Field()
-    tel_seller = scrapy.Field()
-    pass
+    link = scrapy.Field()
+    #describe = scrapy.Field()
+    #name_seller = scrapy.Field()
+    #tel_seller = scrapy.Field()
+    
