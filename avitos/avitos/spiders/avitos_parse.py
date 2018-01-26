@@ -3,7 +3,12 @@ import scrapy
 import time
 from ..items import AvitosItem
 
-
+"""
+TODO: 
+    * сделать парсинг товаров у которых не указана цена, чтобы посмотреть описание и его распарсить
+    * фильтр в названии товара: например, чтобы не встречались слова AGP
+    * 
+"""
 
 
 class AvitosParseSpider(scrapy.Spider):
@@ -34,25 +39,12 @@ class AvitosParseSpider(scrapy.Spider):
     def parse_page(self, response):
         names = response.css('.item-description-title-link::text').extract()
         links = response.css('.item-description-title-link::attr(href)').extract()
-        dirty_prices = response.css('.about::text')
-        prices = []
-        for price in dirty_prices:
-            p = price.extract() 
-            if p is not None:
-                prices.append(p) 
-            else:
-                prices.append("") 
-            
-            """
-            if len(p)>1:
-                prices.append('-1')  # цена не указана
-            else:
-            """
-            
+        dirty_prices = response.css('.about') #response.css('.about::text')
+
         item = AvitosItem()
         for i in range(0,len(names)):
             item['name'] = names[i].strip()
-            item['price'] = self.clear_price(prices[i].strip()).split() # "".join(self.clear_price(prices[i].strip()).split()) # сделать очистку от букв, знаков препинания, пробелы
+            item['price'] = "".join(self.clear_price(((dirty_prices[i].css("::text")).extract_first())).split()) # prices[i] # .strip() #self.clear_price(prices[i].strip()).split() # "".join(self.clear_price(prices[i].strip()).split()) # сделать очистку от букв, знаков препинания, пробелы
+            #item['price_clear'] = self.clear_price(prices[i].strip()).split() # "".join(self.clear_price(prices[i].strip()).split()) # сделать очистку от букв, знаков препинания, пробелы
             item['link'] = self.http_prefix + links[i]
             yield item
-
